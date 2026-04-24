@@ -58,6 +58,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { Analytics } from '@vercel/analytics/react';
 
 // Helper for tailwind classes
 function cn(...inputs: ClassValue[]) {
@@ -253,6 +254,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-brand-bg text-slate-300 overflow-hidden font-sans selection:bg-brand-cyan/30">
+      <Analytics />
       {/* Sidebar: Immersive UI Structure */}
       <motion.aside 
         initial={false}
