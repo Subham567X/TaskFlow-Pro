@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isAdmin() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin';
+    }
+    function isVerifiedEmail() { return request.auth.token.email_verified == true; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Validation Blueprints ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid == request.auth.uid &&
+             data.email is string &&
+             data.role in ['user', 'admin'] &&
+             (data.get('isAdminVerified', false) is bool);
+    }
+
+    function isValidRegistration(data) {
+      return data.keys().hasAll(['sectionId', 'name', 'isHelping']) &&
+             data.sectionId is string && data.sectionId.size() <= 64 &&
+             data.name is string && data.name.size() <= 128 &&
+             data.isHelping is bool;
+    }
+
+    function isValidReport(data) {
+      return data.keys().hasAll(['userId', 'sectionId', 'createdAt', 'status']) &&
+             data.userId == request.auth.uid &&
+             data.sectionId is string && data.sectionId.size() <= 64 &&
+             data.createdAt == request.time &&
+             data.status == 'pending' &&
+             (data.get('fileName', '') is string) &&
+             (data.get('fileData', '') is string) &&
+             (data.get('userName', '') is string) &&
+             (data.get('contentText', '') is string) &&
+             (data.get('script', '') is string);
+    }
+
+    // --- Rules ---
+
+    // Users
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin() || isSystemRoot();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin() || isSystemRoot();
+    }
+
+    // Registrations (Sections)
+    match /sections/{sectionId}/registrations/{regId} {
+      allow read: if isSignedIn() && isValidId(sectionId);
+      allow create, update: if (isAdmin() || isSystemRoot()) && isValidRegistration(incoming()) && isValidId(sectionId);
+      allow delete: if isAdmin() || isSystemRoot();
+    }
+
+    // Reports
+    match /reports/{reportId} {
+      allow create: if isSignedIn() && isValidReport(incoming());
+      allow read: if isSignedIn();
+      allow update: if (isAdmin() || isSystemRoot()) && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'reviewerId', 'updatedAt']);
+      allow delete: if isAdmin() || isSystemRoot();
+    }
+  }
+
+  function isSystemRoot() {
+    return isSignedIn() && 
+           request.auth.token.email == 'subhambusiness566@gmail.com' && 
+           request.auth.token.email_verified == true;
+  }
+}

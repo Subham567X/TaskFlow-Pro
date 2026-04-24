@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and roles",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isAdminVerified": { "type": "boolean", "description": "Whether the admin has passed the biometric scan in the current session" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Registration": {
+      "title": "Module Registration",
+      "description": "Names registered in specific production sections",
+      "type": "object",
+      "properties": {
+        "sectionId": { "type": "string" },
+        "name": { "type": "string" },
+        "isHelping": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sectionId", "name", "isHelping"]
+    },
+    "Report": {
+      "title": "Regular Task Update",
+      "description": "Work reports submitted by users",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "sectionId": { "type": "string", "description": "The section this work belongs to" },
+        "contentText": { "type": "string" },
+        "voiceUrl": { "type": "string" },
+        "script": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "reviewerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "sectionId", "createdAt", "status"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and metadata"
+    },
+    "sections/{sectionId}/registrations/{regId}": {
+      "schema": "Registration",
+      "description": "Team members registered in production modules"
+    },
+    "reports/{reportId}": {
+      "schema": "Report",
+      "description": "Daily task reports and updates"
+    }
+  }
+}

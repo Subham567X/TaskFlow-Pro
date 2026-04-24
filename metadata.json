@@ -1,0 +1,6 @@
+{
+  "name": "TaskFlow Pro Manager",
+  "description": "A high-performance team task manager for animation movie production with role-based access, automated reporting, and secure biometric simulation.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["Task Management", "Team Collaboration", "Biometric Authentication Simulation"]
+}
